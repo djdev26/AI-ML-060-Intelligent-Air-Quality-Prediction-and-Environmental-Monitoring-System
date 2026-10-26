@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Batch CSV Prediction | AI-ML-060{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h2 class="fw-bold" style="color: var(--dark-navy);">
+            <i class="bi bi-file-earmark-spreadsheet-fill text-teal" style="color: var(--primary-teal);"></i> Batch Air Quality Prediction
+        </h2>
+        <p class="text-muted">
+            Upload a CSV file containing multiple hourly environmental recordings. The system validates schema structure, computes engineered ratio features, applies median imputation and trained IQR boundaries, and outputs high/low CO predictions and probability scores.
+        </p>
+    </div>
+    <div class="col-lg-4 text-lg-end d-flex align-items-center justify-content-lg-end">
+        <a href="{{ url_for('download_sample_csv') }}" class="btn btn-outline-teal shadow-sm" style="border-color: var(--primary-teal); color: var(--primary-teal);">
+            <i class="bi bi-download me-1"></i> Download Sample CSV
+        </a>
+    </div>
+</div>
+
+{% if batch_summary %}
+<!-- Batch Results Summary Card -->
+<div class="card card-custom mb-4 shadow">
+    <div class="card-header card-header-teal py-3 d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="bi bi-check-circle-fill text-success me-2"></i> Batch Processing Completed</span>
+        <a href="{{ url_for('download_file', filename=batch_summary.download_filename) }}" class="btn btn-teal btn-sm">
+            <i class="bi bi-file-earmark-arrow-down-fill me-1"></i> Download Output CSV
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-4 text-center">
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded">
+                    <div class="metric-label">Total Processed</div>
+                    <div class="metric-value text-navy">{{ batch_summary.total_rows }}</div>
+                    <small class="text-muted">Valid Records</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded">
+                    <div class="metric-label">Low CO Samples</div>
+                    <div class="metric-value text-success">{{ batch_summary.low_co_count }}</div>
+                    <small class="text-muted">{{ "%.1f"|format(batch_summary.low_co_pct) }}% (CO &le; 4.0 mg/m³)</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded">
+                    <div class="metric-label">High CO Alerts</div>
+                    <div class="metric-value text-danger">{{ batch_summary.high_co_count }}</div>
+                    <small class="text-muted">{{ "%.1f"|format(batch_summary.high_co_pct) }}% (CO &gt; 4.0 mg/m³)</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded">
+                    <div class="metric-label">Processing Time</div>
+                    <div class="metric-value text-teal" style="color: var(--primary-teal);">{{ batch_summary.elapsed_seconds }}s</div>
+                    <small class="text-muted">Inference Latency</small>
+                </div>
+            </div>
+        </div>
+
+        <h6 class="fw-bold text-navy mb-2">First 10 Batch Inference Samples:</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-bordered align-middle small">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>PT08.S1(CO)</th>
+                        <th>C6H6(GT)</th>
+                        <th>NOx(GT)</th>
+                        <th>PT08.S3(NOx)</th>
+                        <th>T (°C)</th>
+                        <th>RH (%)</th>
+                        <th>Predicted Risk</th>
+                        <th>Probability</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in batch_summary.preview_rows %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ "%.1f"|format(row['PT08.S1(CO)']) }}</td>
+                        <td>{{ "%.1f"|format(row['C6H6(GT)']) }}</td>
+                        <td>{{ "%.1f"|format(row['NOx(GT)']) }}</td>
+                        <td>{{ "%.1f"|format(row['PT08.S3(NOx)']) }}</td>
+                        <td>{{ "%.1f"|format(row['T']) }}</td>
+                        <td>{{ "%.1f"|format(row['RH']) }}</td>
+                        <td>
+                            {% if row['prediction_label'] == 'High CO' %}
+                            <span class="badge bg-danger">High CO</span>
+                            {% else %}
+                            <span class="badge bg-success">Low CO</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ "%.2f"|format(row['predicted_probability'] * 100) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Upload Box -->
+<div class="card card-custom p-4">
+    <form id="batch-upload-form" method="POST" action="{{ url_for('batch') }}" enctype="multipart/form-data">
+        <div class="p-4 border-2 border-dashed rounded text-center mb-3" style="border: 2px dashed #cbd5e1; background: #fdfefe;">
+            <i class="bi bi-cloud-arrow-up-fill display-4 text-teal" style="color: var(--primary-teal);"></i>
+            <h5 class="fw-bold mt-2">Select CSV File for Batch Analysis</h5>
+            <p class="text-muted small mb-3">Accepts comma-delimited or semicolon-delimited CSV files up to 10 MB.</p>
+            <div class="col-md-6 mx-auto">
+                <input class="form-control" type="file" id="batchFile" name="file" accept=".csv" required>
+            </div>
+        </div>
+
+        <div id="batch-loading-spinner" class="text-center my-3 d-none">
+            <div class="spinner-border text-teal" style="color: var(--primary-teal);" role="status">
+                <span class="visually-hidden">Processing...</span>
+            </div>
+            <p class="text-muted small mt-2">Executing Preprocessing Pipeline and Linear Regularized Classifiers...</p>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted"><i class="bi bi-shield-check text-success"></i> Strict column validation and leakage prevention applied.</small>
+            <button type="submit" id="batch-submit-btn" class="btn btn-teal px-4 shadow-sm">
+                <i class="bi bi-play-circle-fill me-1"></i> Start Batch Prediction
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

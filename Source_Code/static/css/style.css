@@ -1,0 +1,145 @@
+/* AI-ML-060: Intelligent Air Quality Prediction Dashboard CSS */
+:root {
+  --primary-teal: #0f766e;
+  --primary-teal-hover: #115e59;
+  --secondary-green: #1b4934;
+  --accent-amber: #d97706;
+  --dark-navy: #0f172a;
+  --surface-navy: #1e293b;
+  --bg-light: #f8fafc;
+  --card-border: #e2e8f0;
+  --danger-red: #dc2626;
+  --success-green: #16a34a;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-light);
+  color: #334155;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Navbar */
+.navbar-custom {
+  background: linear-gradient(135deg, var(--secondary-green) 0%, var(--primary-teal) 100%);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-link {
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: #a7f3d0 !important;
+  transform: translateY(-1px);
+}
+
+/* Cards & Containers */
+.card-custom {
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+}
+
+.card-custom:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.card-header-teal {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  border-bottom: 1px solid #99f6e4;
+  color: var(--primary-teal);
+  font-weight: 700;
+}
+
+.metric-card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 5px solid var(--primary-teal);
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--dark-navy);
+  line-height: 1.2;
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Badges */
+.badge-high-co {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  font-size: 1rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+}
+
+.badge-low-co {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  font-size: 1rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+}
+
+/* Buttons */
+.btn-teal {
+  background-color: var(--primary-teal);
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.btn-teal:hover {
+  background-color: var(--primary-teal-hover);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Disclaimer Banner */
+.disclaimer-banner {
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1e3a8a;
+  margin-bottom: 1.5rem;
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+  background-color: var(--dark-navy);
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
