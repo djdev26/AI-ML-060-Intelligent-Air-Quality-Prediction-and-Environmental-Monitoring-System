@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI-ML-060: Model Evaluation Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; color: #1e293b; background: #f8fafc; }
+        .container { max-width: 900px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { color: #0f766e; border-bottom: 2px solid #0f766e; padding-bottom: 10px; }
+        h2 { color: #1e293b; margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #e2e8f0; }
+        th { background-color: #f1f5f9; color: #0f172a; font-weight: 600; }
+        .badge { background: #0f766e; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; }
+        .badge-success { background: #16a34a; }
+        .highlight { background: #f0fdf4; font-weight: bold; color: #15803d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI-ML-060: Air Quality Model Evaluation Report</h1>
+        <p><strong>Generated:</strong> 2026-10-26 11:22:03 | <strong>Status:</strong> <span class="badge badge-success">Production Verified</span></p>
+        
+        <h2>1. Executive Summary</h2>
+        <p>The Intelligent Air Quality Prediction System establishes an empirical benchmark for binary high-risk Carbon Monoxide hazard detection (CO &gt; 4.0 mg/m&sup3;) using metal-oxide chemical multisensors. The L1 regularized classifier achieves <strong>94.59% accuracy</strong> and a <strong>0.9873 ROC-AUC</strong>, exceeding the 85.0% performance benchmark.</p>
+        
+        <h2>2. Empirical Test Set Comparison (N = 1,535)</h2>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Model A (L1 Lasso-Style)</th>
+                <th>Model B (L2 Ridge-Style)</th>
+            </tr>
+            <tr class="highlight">
+                <td>Test Accuracy</td>
+                <td>94.59%</td>
+                <td>94.20%</td>
+            </tr>
+            <tr>
+                <td>Weighted F1-Score</td>
+                <td>0.9498</td>
+                <td>0.9466</td>
+            </tr>
+            <tr>
+                <td>High CO Sensitivity (Recall)</td>
+                <td>94.44%</td>
+                <td>95.06%</td>
+            </tr>
+            <tr>
+                <td>High CO Precision</td>
+                <td>67.40%</td>
+                <td>65.53%</td>
+            </tr>
+            <tr>
+                <td>ROC-AUC Score</td>
+                <td>0.9873</td>
+                <td>0.9872</td>
+            </tr>
+        </table>
+
+        <h2>3. Leakage Prevention Protocol</h2>
+        <p>Target column <code>CO(GT)</code> is strictly omitted from model predictor vectors. In-fold SMOTE oversampling is restricted entirely to training folds during 5-fold cross-validation, preserving independent validation integrity.</p>
+    </div>
+</body>
+</html>

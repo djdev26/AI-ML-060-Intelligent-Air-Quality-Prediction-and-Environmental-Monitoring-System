@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | AI-ML-060 Air Quality Monitoring{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-4 align-items-center">
+    <div class="col-lg-8">
+        <h1 class="display-6 fw-bold text-navy" style="color: var(--dark-navy);">
+            Intelligent Air Quality &amp; Carbon Monoxide Risk Predictor
+        </h1>
+        <p class="lead text-muted mb-0">
+            Machine learning prototype leveraging solid-state chemical multisensor arrays to predict dangerous high-level Carbon Monoxide pollution (<span class="badge bg-danger">CO &gt; 4.0 mg/m³</span>) with mathematically leak-free SMOTE resampling and regularized linear classifiers.
+        </p>
+    </div>
+    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <a href="{{ url_for('predict') }}" class="btn btn-teal btn-lg me-2 shadow-sm">
+            <i class="bi bi-cpu me-1"></i> Single Predict
+        </a>
+        <a href="{{ url_for('batch') }}" class="btn btn-outline-secondary btn-lg shadow-sm">
+            <i class="bi bi-upload me-1"></i> Batch CSV
+        </a>
+    </div>
+</div>
+
+<!-- Performance Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card card-custom p-3 border-start-teal" style="border-left: 5px solid var(--primary-teal);">
+            <div class="metric-label">Test Accuracy</div>
+            <div class="metric-value text-teal" style="color: var(--primary-teal);">{{ "%.2f"|format(metrics.accuracy * 100) }}%</div>
+            <small class="text-muted"><i class="bi bi-shield-check text-success"></i> Target: &ge;85.00%</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card card-custom p-3" style="border-left: 5px solid #0284c7;">
+            <div class="metric-label">ROC-AUC Score</div>
+            <div class="metric-value" style="color: #0284c7;">{{ "%.4f"|format(metrics.roc_auc) }}</div>
+            <small class="text-muted"><i class="bi bi-graph-up-arrow text-primary"></i> High Discrimination</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card card-custom p-3" style="border-left: 5px solid #16a34a;">
+            <div class="metric-label">Weighted F1-Score</div>
+            <div class="metric-value text-success">{{ "%.4f"|format(metrics.f1_weighted) }}</div>
+            <small class="text-muted"><i class="bi bi-bullseye text-success"></i> Imbalance-Balanced</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card card-custom p-3" style="border-left: 5px solid var(--accent-amber);">
+            <div class="metric-label">High CO Sensitivity</div>
+            <div class="metric-value" style="color: var(--accent-amber);">{{ "%.2f"|format(metrics.recall_positive_class * 100) }}%</div>
+            <small class="text-muted"><i class="bi bi-exclamation-octagon text-danger"></i> Positive Recall</small>
+        </div>
+    </div>
+</div>
+
+<!-- Model & Dataset Architecture Section -->
+<div class="row g-4 mb-4">
+    <!-- Selected Model Summary -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header card-header-teal py-3 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cpu-fill me-2"></i> Selected Deployment Classifier</span>
+                <span class="badge bg-teal text-white" style="background-color: var(--primary-teal);">Primary Model</span>
+            </div>
+            <div class="card-body">
+                <h5 class="fw-bold mb-1">{{ best_model_info.name }}</h5>
+                <p class="text-muted small mb-3">{{ best_model_info.description }}</p>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <tbody>
+                            <tr>
+                                <th class="bg-light text-muted w-40">Regularization Type</th>
+                                <td><span class="badge bg-primary">{{ best_model_info.regularization }}</span></td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted">Regularization Parameter C</th>
+                                <td><code>{{ best_model_info.c_value }}</code> (Inverse penalty approximation to &alpha;=0.01)</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted">Pipeline Sequence</th>
+                                <td><small class="text-secondary">Median Imputer &rarr; IQR Clipper &rarr; StandardScaler &rarr; SMOTE &rarr; Estimator</small></td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted">Target Leakage Prevention</th>
+                                <td><span class="badge bg-success"><i class="bi bi-check-circle"></i> CO(GT) Excluded from Predictors</span></td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light text-muted">Resampling Protocol</th>
+                                <td><span class="badge bg-info text-dark"><i class="bi bi-lock-fill"></i> SMOTE strictly inside training CV folds</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-light border small text-muted mb-0">
+                    <i class="bi bi-info-circle me-1 text-primary"></i>
+                    <strong>5-Fold Stratified Cross-Validation:</strong>
+                    Mean Accuracy: <strong>{{ "%.2f"|format(cv_results.accuracy.val_mean * 100) }}% &plusmn; {{ "%.2f"|format(cv_results.accuracy.val_std * 100) }}%</strong> |
+                    Mean F1: <strong>{{ "%.4f"|format(cv_results.f1_weighted.val_mean) }}</strong> |
+                    Mean ROC-AUC: <strong>{{ "%.4f"|format(cv_results.roc_auc.val_mean) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dataset & Target Balance Summary -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header card-header-teal py-3 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-database-fill-gear me-2"></i> Dataset Characteristics</span>
+                <span class="badge bg-secondary">UCI Air Quality</span>
+            </div>
+            <div class="card-body">
+                <h5 class="fw-bold mb-1">Field Multisensor Ground Truth Data</h5>
+                <p class="text-muted small mb-3">Recorded by Italian CNR-ISAC institute in a polluted urban area (March 2004 – April 2005).</p>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-4 text-center p-2 rounded bg-light">
+                        <div class="fw-bold fs-5 text-navy">{{ dataset_stats.cleaned_rows }}</div>
+                        <small class="text-muted">Total Hourly Rows</small>
+                    </div>
+                    <div class="col-4 text-center p-2 rounded bg-light">
+                        <div class="fw-bold fs-5 text-teal" style="color: var(--primary-teal);">{{ dataset_stats.valid_target_rows }}</div>
+                        <small class="text-muted">Valid Labeled Samples</small>
+                    </div>
+                    <div class="col-4 text-center p-2 rounded bg-light">
+                        <div class="fw-bold fs-5 text-primary">{{ dataset_stats.total_features }}</div>
+                        <small class="text-muted">Predictor Features</small>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-navy small text-uppercase">Ground-Truth Target Class Balance:</h6>
+                <div class="progress mb-2" style="height: 24px;">
+                    <div class="progress-bar bg-teal" role="progressbar" style="width: {{ 100 - dataset_stats.positive_percent }}%; background-color: var(--primary-teal);" title="Low CO">
+                        Low CO: {{ "%.1f"|format(100 - dataset_stats.positive_percent) }}% ({{ dataset_stats.negative_count }})
+                    </div>
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ dataset_stats.positive_percent }}%;" title="High CO">
+                        High CO: {{ "%.1f"|format(dataset_stats.positive_percent) }}% ({{ dataset_stats.positive_count }})
+                    </div>
+                </div>
+                <small class="text-muted d-block mb-3">
+                    Severe class imbalance (1 : 8.5 ratio) successfully resolved via training-only Synthetic Minority Over-sampling Technique (SMOTE).
+                </small>
+
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('results') }}" class="btn btn-outline-teal btn-sm flex-grow-1" style="border-color: var(--primary-teal); color: var(--primary-teal);">
+                        <i class="bi bi-images me-1"></i> View 17 Analytical Plots
+                    </a>
+                    <a href="{{ url_for('about') }}" class="btn btn-light btn-sm flex-grow-1 border">
+                        <i class="bi bi-journal-text me-1"></i> Scientific Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Embedded Highlights Visualizations Carousel -->
+<div class="card card-custom mb-4">
+    <div class="card-header card-header-teal py-3">
+        <i class="bi bi-graph-up me-2"></i> Key Empirical Evaluation Artifacts
+    </div>
+    <div class="card-body">
+        <div class="row g-4 align-items-center">
+            <div class="col-md-6 text-center">
+                <img src="{{ url_for('static_images', filename='14_roc_curves.png') }}" class="img-fluid rounded border shadow-sm" alt="ROC Curves">
+                <caption class="d-block text-muted small mt-2 fw-semibold">Figure A: Receiver Operating Characteristic (ROC) Comparison (AUC = 0.9873)</caption>
+            </div>
+            <div class="col-md-6 text-center">
+                <img src="{{ url_for('static_images', filename='15_feature_importance_coefficients.png') }}" class="img-fluid rounded border shadow-sm" alt="Feature Importance">
+                <caption class="d-block text-muted small mt-2 fw-semibold">Figure B: Top 15 Standardized Model Predictor Coefficients</caption>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

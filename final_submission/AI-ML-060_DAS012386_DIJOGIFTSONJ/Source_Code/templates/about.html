@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Methodology &amp; System Architecture | AI-ML-060{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h2 class="fw-bold" style="color: var(--dark-navy);">
+            <i class="bi bi-journal-bookmark-fill text-teal" style="color: var(--primary-teal);"></i> System Methodology &amp; Mathematical Framework
+        </h2>
+        <p class="lead text-muted">
+            Theoretical foundation, chemical sensor mechanics, leakage-free cross-validation guarantees, and regularized objective functions of AI-ML-060.
+        </p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <!-- 1. Problem Formulation -->
+        <div class="card card-custom mb-4 p-4">
+            <h5 class="fw-bold text-navy mb-3"><i class="bi bi-bullseye text-teal me-2" style="color: var(--primary-teal);"></i> 1. Problem Formulation &amp; Target Construction</h5>
+            <p>
+                Carbon monoxide (CO) is a colorless, odorless, and highly toxic air pollutant emitted primarily from incomplete combustion in vehicular engines and industrial processes. While certified reference analyzers (such as non-dispersive infrared photometers) provide gold-standard concentration measurements, they are bulky, expensive, and impractical for dense spatial deployments. Low-cost metal-oxide semiconductor (MOS) chemical sensors offer an economical alternative but suffer from cross-sensitivity to relative humidity, temperature, and interfering gaseous compounds.
+            </p>
+            <p>
+                In this investigation, we formulate an intelligent binary early-warning detection model to classify whether ambient carbon monoxide exceeds the hazardous concentration threshold of <strong>4.0 mg/m³</strong>:
+            </p>
+            <div class="bg-light p-3 rounded border text-center my-3 font-monospace">
+                co_high = 1 &nbsp; if &nbsp; CO(GT) &gt; 4.0 mg/m³ &nbsp; else &nbsp; 0
+            </div>
+            <p class="small text-muted mb-0">
+                <strong>Leakage-Free Rule:</strong> The continuous target <code>CO(GT)</code> is strictly excised from all predictor feature vectors $X$, preventing direct mathematical target leakage into the estimator.
+            </p>
+        </div>
+
+        <!-- 2. Feature Engineering & Safe Division -->
+        <div class="card card-custom mb-4 p-4">
+            <h5 class="fw-bold text-navy mb-3"><i class="bi bi-calculator text-teal me-2" style="color: var(--primary-teal);"></i> 2. Domain Feature Engineering &amp; Safe Division</h5>
+            <p>
+                Chemical sensor responses interact strongly with ambient meteorological parameters. We engineer domain features using safe division with machine epsilon ($\epsilon = 10^{-6}$):
+            </p>
+            <ul>
+                <li><strong>Sensor Ratio:</strong> $\text{co\_nox\_ratio} = \frac{\text{PT08.S1(CO)}}{\text{PT08.S3(NOx)} + \epsilon}$ (Captures carbonaceous versus nitrogenous vehicular combustion proportion using non-target sensor arrays).</li>
+                <li><strong>Thermal-Moisture Ratio:</strong> $\text{temp\_humidity\_ratio} = \frac{T}{\text{RH} + \epsilon}$</li>
+                <li><strong>Vapor Interaction:</strong> $\text{temp\_humidity\_product} = T \times \text{RH}$</li>
+                <li><strong>Cyclic Temporal Indices:</strong> $\text{hour} \in [0, 23]$, $\text{month} \in [1, 12]$, $\text{day\_of\_week} \in [0, 6]$ extracted from the verified timestamp.</li>
+            </ul>
+        </div>
+
+        <!-- 3. Leak-Free SMOTE & Pipeline -->
+        <div class="card card-custom mb-4 p-4">
+            <h5 class="fw-bold text-navy mb-3"><i class="bi bi-shield-check text-teal me-2" style="color: var(--primary-teal);"></i> 3. Leak-Free Preprocessing &amp; Resampling Protocol</h5>
+            <p>
+                Severe class imbalance (10.58% high-CO minority class) can cause linear classifiers to collapse toward the majority class. However, standard naive implementations often apply SMOTE across the full dataset before splitting, which artificially leaks validation samples into training.
+            </p>
+            <p>
+                Our architecture enforces strict leakage prevention using <code>imblearn.pipeline.Pipeline</code>:
+            </p>
+            <ol>
+                <li><strong>Stratified 80:20 Split:</strong> Fixed seed (42), partitioning the dataset prior to computing any data-dependent statistics.</li>
+                <li><strong>Median Imputation:</strong> Replaces missing sensor readings (where -200 errors occurred) using median values fitted exclusively on training folds.</li>
+                <li><strong>Train-Fitted IQR Clipping:</strong> Clips outliers within $[Q_1 - 2.5 \times \text{IQR}, Q_3 + 2.5 \times \text{IQR}]$ learned strictly on training splits.</li>
+                <li><strong>StandardScaler:</strong> Standardizes features to zero mean and unit variance.</li>
+                <li><strong>In-Fold SMOTE:</strong> Generates synthetic minority samples strictly inside the training split of each cross-validation fold:
+                    <div class="font-monospace text-center my-2">$x_{\text{synthetic}} = x_i + \lambda (x_{\text{zi}} - x_i), \quad \lambda \sim U(0, 1)$</div>
+                </li>
+            </ol>
+        </div>
+
+        <!-- 4. L1 vs L2 Regularization Formulation -->
+        <div class="card card-custom mb-4 p-4">
+            <h5 class="fw-bold text-navy mb-3"><i class="bi bi-diagram-3-fill text-teal me-2" style="color: var(--primary-teal);"></i> 4. Regularization Framework (L1 vs L2)</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <h6 class="fw-bold text-primary">Model A: L1 Lasso-Style Regularization</h6>
+                        <p class="small text-muted mb-2">Penalizes the $\ell_1$-norm of the coefficient vector: $\lambda \|w\|_1$.</p>
+                        <p class="small mb-0">Forces uninformative or collinear sensor coefficients to exactly zero, acting as automatic feature selection. Solver: <code>liblinear</code>, $C=100.0$ (inverse regularization approximation to $\alpha=0.01$).</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <h6 class="fw-bold text-success">Model B: L2 Ridge-Style Regularization</h6>
+                        <p class="small text-muted mb-2">Penalizes the squared $\ell_2$-norm: $\frac{\lambda}{2} \|w\|_2^2$.</p>
+                        <p class="small mb-0">Shrinks correlated sensor coefficients proportionally toward zero without forcing complete sparsity, stabilizing estimation under multicollinearity. Solver: <code>lbfgs</code>, $C=1.0$ (inverse regularization approximation to $\alpha=1.0$).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Architecture & Flowchart Diagrams Sidebar -->
+    <div class="col-lg-4">
+        <div class="card card-custom mb-4 p-3">
+            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-diagram-2-fill me-1"></i> System Architecture</h6>
+            <img src="{{ url_for('static_docs', filename='architecture.png') }}" class="img-fluid rounded border mb-2 shadow-sm" alt="System Architecture">
+            <small class="text-muted">4-tier modular pipeline architecture: Data Ingestion, Leak-Free Feature Preprocessing, Estimator Training, and Flask Interface.</small>
+        </div>
+
+        <div class="card card-custom mb-4 p-3">
+            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-arrow-repeat me-1"></i> Workflow Flowchart</h6>
+            <img src="{{ url_for('static_docs', filename='flowchart.png') }}" class="img-fluid rounded border mb-2 shadow-sm" alt="Workflow Flowchart">
+            <small class="text-muted">End-to-end execution sequence from raw UCI ingestion to evaluation, reporting, and deployment.</small>
+        </div>
+    </div>
+</div>
+{% endblock %}

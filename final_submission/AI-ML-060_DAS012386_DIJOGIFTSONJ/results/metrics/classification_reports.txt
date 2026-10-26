@@ -1,0 +1,30 @@
+=======================================================
+AI-ML-060: MODEL CLASSIFICATION PERFORMANCE REPORTS
+Held-Out Test Set (20% Stratified Split, N = 1535)
+=======================================================
+
+1. MODEL A: LASSO-STYLE L1 REGULARIZED LOGISTIC REGRESSION (C=100.0, liblinear)
+-------------------------------------------------------
+              precision    recall  f1-score   support
+
+  Low CO (0)       0.99      0.95      0.97      1373
+ High CO (1)       0.67      0.94      0.79       162
+
+    accuracy                           0.95      1535
+   macro avg       0.83      0.95      0.88      1535
+weighted avg       0.96      0.95      0.95      1535
+
+ROC-AUC Score: 0.9873
+
+2. MODEL B: RIDGE-STYLE L2 REGULARIZED LOGISTIC REGRESSION (C=1.0, lbfgs)
+-------------------------------------------------------
+              precision    recall  f1-score   support
+
+  Low CO (0)       0.99      0.94      0.97      1373
+ High CO (1)       0.66      0.95      0.78       162
+
+    accuracy                           0.94      1535
+   macro avg       0.82      0.95      0.87      1535
+weighted avg       0.96      0.94      0.95      1535
+
+ROC-AUC Score: 0.9872

@@ -1,0 +1,56 @@
+================================================================================
+AI-ML-060: INTELLIGENT AIR QUALITY PREDICTION SYSTEM
+FINAL MODEL EVALUATION & EMPIRICAL BENCHMARK REPORT
+Generated: 2026-10-26 11:22:03
+================================================================================
+
+1. PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+Project Title: Intelligent Air Quality Prediction and Environmental Monitoring System
+Domain: Environmental Machine Learning / Multisensor Chemical Arrays
+Dataset: UCI Air Quality Dataset (March 2004 - April 2005, Italy)
+Target Definition: Binary Risk Classification (co_high = 1 if CO(GT) > 4.0 mg/m3 else 0)
+Leakage Prevention: CO(GT) strictly excluded from all predictors.
+Preprocessing Pipeline: Median Imputation -> IQR Clipping (x2.5) -> StandardScaler -> In-Fold SMOTE
+
+2. DATASET SUMMARY
+--------------------------------------------------------------------------------
+Total Hourly Records: 9,357
+Valid Labeled Ground-Truth Rows: 7,674
+Missing Target (-200 Error) Rows Handled: 1,683
+High CO Class Distribution: 812 samples (10.58% positive class)
+Low CO Class Distribution: 6,862 samples (89.42% negative class)
+Class Imbalance Ratio: ~1:8.5 (Resolved via SMOTE within cross-validation folds)
+Train-Test Split: 80% Train (6,139 samples) : 20% Test (1,535 samples)
+
+3. 5-FOLD STRATIFIED CROSS-VALIDATION RESULTS (Training Set Only)
+--------------------------------------------------------------------------------
+Model A (L1 / Lasso-Style Logistic Regression, C=100.0, liblinear):
+  - Mean CV Accuracy: 94.85% ± 0.24%
+  - Mean Weighted F1: 0.9521 ± 0.0017
+  - Mean ROC-AUC:    0.9869 ± 0.0043
+
+Model B (L2 / Ridge-Style Logistic Regression, C=1.0, lbfgs):
+  - Mean CV Accuracy: 94.23% ± 0.30%
+  - Mean Weighted F1: 0.9468 ± 0.0024
+  - Mean ROC-AUC:    0.9866 ± 0.0041
+
+4. HELD-OUT TEST SET EVALUATION (Untouched 20% Split, N = 1,535)
+--------------------------------------------------------------------------------
+Metric                          Model A (L1 Lasso)      Model B (L2 Ridge)
+--------------------------------------------------------------------------------
+Test Accuracy                   94.59%                 94.20%
+Weighted Precision              0.9594                  0.9581
+Weighted Recall                 0.9459                  0.9420
+Weighted F1-Score               0.9498                  0.9466
+High CO Sensitivity (Recall)    94.44%                 95.06%
+High CO Precision               67.40%                 65.53%
+High CO F1-Score                0.7866                  0.7758
+ROC-AUC Score                   0.9873                  0.9872
+--------------------------------------------------------------------------------
+Selected Best Model: Model A (L1 Regularized Logistic Regression)
+Target Accuracy Benchmark (>= 85.0%): ACHIEVED (94.59%)
+
+================================================================================
+END OF REPORT
+================================================================================

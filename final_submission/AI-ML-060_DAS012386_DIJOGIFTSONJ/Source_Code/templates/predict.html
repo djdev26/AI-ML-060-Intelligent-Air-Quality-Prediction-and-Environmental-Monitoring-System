@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Single Sample Prediction | AI-ML-060{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h2 class="fw-bold" style="color: var(--dark-navy);">
+            <i class="bi bi-cpu-fill text-teal" style="color: var(--primary-teal);"></i> Single Environmental Sample Inference
+        </h2>
+        <p class="text-muted">
+            Provide the environmental sensor readings and meteorological parameters below. The leak-free pipeline will automatically engineer ratio features, apply trained IQR outlier limits, scale features, and compute the probability of high CO pollution (<span class="badge bg-danger">CO &gt; 4.0 mg/m³</span>).
+        </p>
+    </div>
+    <div class="col-lg-4 text-lg-end d-flex align-items-center justify-content-lg-end gap-2">
+        <button type="button" id="fill-sample-btn" class="btn btn-outline-teal btn-sm" style="border-color: var(--primary-teal); color: var(--primary-teal);">
+            <i class="bi bi-magic me-1"></i> Autofill Typical Air Sample
+        </button>
+        <button type="button" id="fill-high-co-btn" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-fire me-1"></i> Autofill High-Pollution Sample
+        </button>
+    </div>
+</div>
+
+{% if result %}
+<!-- Prediction Result Card -->
+<div class="card card-custom mb-4 border-2 {{ 'border-danger' if result.is_high_co else 'border-success' }} shadow">
+    <div class="card-header py-3 {{ 'bg-danger text-white' if result.is_high_co else 'bg-success text-white' }}">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                <i class="bi {{ 'bi-exclamation-triangle-fill' if result.is_high_co else 'bi-check-circle-fill' }} me-2"></i>
+                Prediction Result: {{ result.label }}
+            </h5>
+            <span class="badge bg-white text-dark fw-bold px-3 py-2">Timestamp: {{ result.timestamp }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6 border-end-md">
+                <div class="p-3 text-center">
+                    <span class="display-5 fw-bold {{ 'text-danger' if result.is_high_co else 'text-success' }}">
+                        {{ "%.1f"|format(result.probability_high * 100) }}%
+                    </span>
+                    <div class="text-muted fw-semibold mt-1">High Carbon Monoxide Probability</div>
+                    <div class="progress mt-3" style="height: 18px;">
+                        <div class="progress-bar {{ 'bg-danger' if result.is_high_co else 'bg-success' }}"
+                             role="progressbar" style="width: {{ result.probability_high * 100 }}%;">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted small mt-1">
+                        <span>Low Risk (0%)</span>
+                        <span>Threshold: 50%</span>
+                        <span>High Risk (100%)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3">
+                    <h6 class="fw-bold text-navy mb-2"><i class="bi bi-info-circle me-1"></i> Diagnostic Assessment</h6>
+                    <p class="small text-muted mb-2">
+                        <strong>Classification Decision:</strong>
+                        {% if result.is_high_co %}
+                        <span class="badge bg-danger">High CO Alert (&gt; 4.0 mg/m³)</span> — Environmental sensors indicate elevated chemical response associated with substantial carbon monoxide concentrations.
+                        {% else %}
+                        <span class="badge bg-success">Normal / Acceptable (CO &le; 4.0 mg/m³)</span> — Sensor responses reflect ambient baseline concentrations below the elevated hazard threshold.
+                        {% endif %}
+                    </p>
+                    <p class="small text-muted mb-0">
+                        <strong>Active Model:</strong> {{ result.model_name }} (Logistic Regression with L1 Lasso regularization, calibrated probability output).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Input Form -->
+<form method="POST" action="{{ url_for('predict') }}" class="card card-custom p-4">
+    <div class="card-header-teal p-3 mb-4 rounded d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-sliders me-2"></i> Input Predictor Parameters (CO(GT) strictly excluded to avoid target leakage)</span>
+        <span class="badge bg-secondary">All inputs in native sensor units</span>
+    </div>
+
+    <!-- Section 1: Chemical & Gas Sensors -->
+    <h6 class="text-uppercase fw-bold text-teal mb-3" style="color: var(--primary-teal); font-size: 0.85rem; letter-spacing: 0.5px;">
+        1. Chemical Sensor Responses &amp; Precursor Gas Concentrations
+    </h6>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="PT08_S1_CO" class="form-label fw-semibold small">PT08.S1(CO) <span class="text-muted">(Tin Oxide Sensor)</span></label>
+            <input type="number" step="any" class="form-control" id="PT08_S1_CO" name="PT08.S1(CO)" required placeholder="e.g. 1360.0" value="{{ form_data.get('PT08.S1(CO)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="NMHC_GT" class="form-label fw-semibold small">NMHC(GT) <span class="text-muted">(Hydrocarbons µg/m³)</span></label>
+            <input type="number" step="any" class="form-control" id="NMHC_GT" name="NMHC(GT)" placeholder="e.g. 150.0 (or leave blank)" value="{{ form_data.get('NMHC(GT)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="C6H6_GT" class="form-label fw-semibold small">C6H6(GT) <span class="text-muted">(Benzene µg/m³)</span></label>
+            <input type="number" step="any" class="form-control" id="C6H6_GT" name="C6H6(GT)" required placeholder="e.g. 11.9" value="{{ form_data.get('C6H6(GT)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="PT08_S2_NMHC" class="form-label fw-semibold small">PT08.S2(NMHC) <span class="text-muted">(Titania Sensor)</span></label>
+            <input type="number" step="any" class="form-control" id="PT08_S2_NMHC" name="PT08.S2(NMHC)" required placeholder="e.g. 1046.0" value="{{ form_data.get('PT08.S2(NMHC)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="NOx_GT" class="form-label fw-semibold small">NOx(GT) <span class="text-muted">(Nitrogen Oxides ppb)</span></label>
+            <input type="number" step="any" class="form-control" id="NOx_GT" name="NOx(GT)" required placeholder="e.g. 166.0" value="{{ form_data.get('NOx(GT)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="PT08_S3_NOx" class="form-label fw-semibold small">PT08.S3(NOx) <span class="text-muted">(Tungsten Oxide Sensor)</span></label>
+            <input type="number" step="any" class="form-control" id="PT08_S3_NOx" name="PT08.S3(NOx)" required placeholder="e.g. 1056.0" value="{{ form_data.get('PT08.S3(NOx)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="NO2_GT" class="form-label fw-semibold small">NO2(GT) <span class="text-muted">(Nitrogen Dioxide µg/m³)</span></label>
+            <input type="number" step="any" class="form-control" id="NO2_GT" name="NO2(GT)" required placeholder="e.g. 113.0" value="{{ form_data.get('NO2(GT)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="PT08_S4_NO2" class="form-label fw-semibold small">PT08.S4(NO2) <span class="text-muted">(Tungsten Oxide Sensor)</span></label>
+            <input type="number" step="any" class="form-control" id="PT08_S4_NO2" name="PT08.S4(NO2)" required placeholder="e.g. 1692.0" value="{{ form_data.get('PT08.S4(NO2)', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="PT08_S5_O3" class="form-label fw-semibold small">PT08.S5(O3) <span class="text-muted">(Indium Oxide Sensor)</span></label>
+            <input type="number" step="any" class="form-control" id="PT08_S5_O3" name="PT08.S5(O3)" required placeholder="e.g. 1268.0" value="{{ form_data.get('PT08.S5(O3)', '') }}">
+        </div>
+    </div>
+
+    <!-- Section 2: Meteorological & Temporal Conditions -->
+    <h6 class="text-uppercase fw-bold text-teal mb-3" style="color: var(--primary-teal); font-size: 0.85rem; letter-spacing: 0.5px;">
+        2. Ambient Meteorology &amp; Temporal Context
+    </h6>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="T" class="form-label fw-semibold small">Temperature T (°C)</label>
+            <input type="number" step="any" class="form-control" id="T" name="T" required placeholder="e.g. 13.6" value="{{ form_data.get('T', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="RH" class="form-label fw-semibold small">Relative Humidity RH (%)</label>
+            <input type="number" step="any" class="form-control" id="RH" name="RH" required placeholder="e.g. 48.9" value="{{ form_data.get('RH', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="AH" class="form-label fw-semibold small">Absolute Humidity AH</label>
+            <input type="number" step="any" class="form-control" id="AH" name="AH" required placeholder="e.g. 0.7578" value="{{ form_data.get('AH', '') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="hour" class="form-label fw-semibold small">Hour of Day (0 - 23)</label>
+            <input type="number" min="0" max="23" class="form-control" id="hour" name="hour" required placeholder="e.g. 18" value="{{ form_data.get('hour', '18') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="month" class="form-label fw-semibold small">Month (1 - 12)</label>
+            <input type="number" min="1" max="12" class="form-control" id="month" name="month" required placeholder="e.g. 3" value="{{ form_data.get('month', '3') }}">
+        </div>
+        <div class="col-md-4">
+            <label for="day_of_week" class="form-label fw-semibold small">Day of Week (0 = Mon, 6 = Sun)</label>
+            <input type="number" min="0" max="6" class="form-control" id="day_of_week" name="day_of_week" required placeholder="e.g. 2" value="{{ form_data.get('day_of_week', '2') }}">
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+        <button type="reset" class="btn btn-light border px-4">Reset Fields</button>
+        <button type="submit" class="btn btn-teal px-5 shadow-sm">
+            <i class="bi bi-lightning-charge me-1"></i> Predict Air Quality
+        </button>
+    </div>
+</form>
+{% endblock %}
