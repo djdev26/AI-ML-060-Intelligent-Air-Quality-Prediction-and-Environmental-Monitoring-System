@@ -23,11 +23,17 @@ wheels/
 .installed.cfg
 *.egg
 
+# Demo Video in root (persisted in docs/)
+/AI_ML_060_Prototype_Demo.mp4
+
 # Testing & Cache
 .pytest_cache/
 .coverage
 htmlcov/
 *.log
+temp_video/
+results/predictions/*
+!results/predictions/.gitkeep
 
 # OS
 .DS_Store

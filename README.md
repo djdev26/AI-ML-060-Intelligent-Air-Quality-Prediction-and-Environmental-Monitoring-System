@@ -34,6 +34,22 @@ Both models perform really well, but **Model A (L1 Lasso)** is slightly better a
 
 ---
 
+## 🎥 Prototype Video Demonstration
+
+A complete, high-definition walkthrough of the interactive web prototype is recorded and included locally:
+- **Local Video File:** [`AI_ML_060_Prototype_Demo.mp4`](file:///c:/Users/Dijo%20Giftson/Desktop/Freeintern/AI_ML_060_Prototype_Demo.mp4) (and in `docs/AI_ML_060_Prototype_Demo.mp4`)
+- **Resolution & Frame Rate:** 1280x720 HD @ 30 FPS (H.264 / AAC)
+- **Duration:** 1 min 38 sec
+- **What's demonstrated in the video:**
+  1. **Home Dashboard:** Highlighting key metrics (94.59% accuracy, 0.9873 AUC), model formulation cards, and inline ROC/Feature Importance charts.
+  2. **Single-Sample Inference (Typical Safe Air):** Testing autofilled urban sensor parameters (`PT08.S1=1020`, `PT08.S2=850`), obtaining a green **Low CO Risk (< 4.0 mg/m³)** card with calibrated probability.
+  3. **Single-Sample Inference (High CO Spike Alert):** Testing high-pollution sensor parameters (`PT08.S1=1850`, `NOx=620`), triggering the red **High CO Pollution Alert (> 4.0 mg/m³)** with safety advisories.
+  4. **Batch CSV Inference:** Uploading `data/sample_batch_test.csv` (25 multi-sensor readings), running instantaneous batch inference, showing summary metrics (23 Low CO vs 2 High CO), and previewing the interactive table with risk badges.
+  5. **Analytical Results Gallery & Report Downloads:** Navigating the empirical metrics table, switching between Model Evaluation and EDA tabs, and showcasing instant downloads for Academic PDF, Word DOCX, and HTML reports.
+  6. **Scientific Methodology & Architecture:** Touring the system architecture diagram and pipeline formulation.
+
+---
+
 ## 🛠️ Tech Stack
 
 - **ML & Data:** Python 3.11+, Pandas, NumPy, Scikit-learn, Imbalanced-learn (SMOTE), Joblib
